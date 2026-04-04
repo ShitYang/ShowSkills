@@ -1,4 +1,5 @@
 # DBMS和OS的纠葛
+## 预先分配好内存
 当使用DBMS时，总是需要摆脱OS的页面交换等机制，因为DBMS维护的页面之间是有逻辑关系的，可以优化，而OS不知道。
 1. DBMS会申请一片较大的区域为Buffer Pool，目的是摆脱malloc
 2. DBMS维护Buffer Pool自己页面的换入换出。**但是**需要注意，OS仍然会换入换出页面，即使他是Buffer Pool内的页面。所以一般DBMS独占整个系统。
@@ -11,5 +12,25 @@ DBMS 会通过系统调用告诉操作系统：“这块内存非常重要，绝
 1. 正如你之前的笔记所提到的，我们会配置操作系统参数。
 vm.swappiness = 0 (或 1)：在 Linux 中，这个参数控制内核使用 Swap 的倾向。设置为 0 或 1 意味着“除非发生内存溢出（OOM），否则尽量不要使用 Swap”。
 2. 独占资源：通常数据库服务器会预留足够的内存给 OS（例如 20%），剩下的全给 Buffer Pool，确保物理上就不会触发 Swap 机制。
+## 不要使用mmap
+对于数据库文件，直观想法是mmap映射到内存，然后直接读取，但是这就把Page的控制权交给OS。
 
-# 
+**文件映射mmap**
+``` C++
+int fd = open("test.txt", O_RDWR); // 1. 先打开文件获取 fd
+// 2. 传入 fd
+void *addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+```
+**匿名mmap**
+``` C++
+// 直接传入 -1，并加上 MAP_ANONYMOUS
+void *addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+```
+应当通过read，将对应文件的部分offset（Page），读取到进程地址空间的对应区域。
+
+# Page Layout
+## Turple-Orientation Storage
+
+## Index-Orientation Storage
+
+## Log-Record Storage
