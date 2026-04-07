@@ -34,3 +34,41 @@ void *addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS
 ## Index-Orientation Storage
 
 ## Log-Record Storage
+
+# ARC算法
+## 
+
+# 即使虚拟地址连续，物理地址也不一定连续
+
+# Hash
+## 静态Hash
+需要DBMS预先知道Key的范围，即想存入的数量。
+>> 以下都是解决冲突的策略
+### Linear Probe Hashing
+Hash表中要存Key以及Value，让发生Hash冲突时，可以对比下一个槽位是否空缺。(但是Key和Value要是定长的)
+当装载因子过高，会导致冲突增加。需要创建新表，将旧的全部迁移到新表中。
+![Line Probe](image.png)
+#### 发生删除时
+##### Movement
+开销很大
+![alt text](image-1.png)
+##### Tombstone
+开销小。以下图为例，删除了D之后，如果我访问D，知道表中第二个空位，直接返回空值。
+![alt text](image-2.png)
+
+### Cuckoo Hashing
+运用多个Hash函数，当两个都发生冲突时，他会把其中一个原主赶走。
+![alt text](image-3.png)
+被赶走的，继续hash，从（除了被赶走的位置）其他位置开始，继续Hash。以此类推。
+![alt text](image-4.png)
+**实际上，Linear Probe Hash 非常快**
+>> 以上都是解决冲突的策略
+## 动态Hash
+>> 以下都是动态调整Hash表的策略
+### Chained Hashing
+![alt text](image-5.png)
+### Extendible Hashing
+Chained Hashing的改进
+  
+### Linear Hashing
+>> 以上都是动态调整Hash表的策略
