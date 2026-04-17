@@ -91,3 +91,118 @@ DIS遵循IEEE协议，还有其他的分布式仿真协议，他们公用ExtInte
 - **集成上**：在 `xio_sim` 这层，XIO **会读取/使用 DIS 接口（WsfDisInterface）提供的信息**，并把这些信息包装成 XIO 的请求/响应或订阅推送给外部应用；同时也可能通过扩展点影响 DIS 平台创建/消息路由。
 
 如果你想我把“交叉调用链”画出来（例如 `WsfXIO_RequestDisDataPkt → WsfXIO_DisService::HandleRequest → WsfDisInterface/... → WsfXIO_DisPlatformInfoPkt`），我可以继续把对应 `.cpp` 的关键实现段落也定位出来。
+
+### 数据流转
+![alt text](image-16.png)
+不难看出，XIO_Interface的AdvanceTime是在仿真线程中做的
+
+#### 单向 (Pkt)
+是双向的基础
+
+#### 双向（Request和Query）
+- Query ：一次性“询问”，等一个“结论”（resolved / timeout / disconnected）。
+- Request ：订阅式“请求”，会持续收数据，直到一方取消。
+##### 从代码看区别
+- 生命周期
+  
+  - Query 构造时就注册到 QueryManager ，完成后 Complete() 立即移除（ WsfXIO_Query.cpp , WsfXIO_Query.cpp ）。
+  - Request 由 RequestManager 持有， AddRequest() 后会 Initialized() 并发送请求，之后可多次接收 Response （ WsfXIO_Request.cpp , WsfXIO_Request.hpp ）。
+- 消息模式
+  
+  - Query 的注释写得很明确：实际请求参数消息要“另外发送”， Query 本体主要跟踪“结果”（ WsfXIO_Query.hpp ）。
+  - Request 自己有 SendRequest(WsfXIO_RequestDataPkt&) ，并通过 HandleResponse(...) 接收服务端连续回应（ WsfXIO_Request.hpp , WsfXIO_Request.cpp ）。
+- 结束条件
+  
+  - Query ： resolution / timeout / disconnect 三类结束（ WsfXIO_Query.cpp ）。
+  - Request ：通过取消包或连接断开结束； RequestManager 会处理远端取消和本地取消（ WsfXIO_Request.cpp , WsfXIO_Request.cpp ）。
+- 连接要求
+  
+  - Query 强制可靠连接（断言 IsReliable() ）（ WsfXIO_Query.cpp ）。
+  - Request 可以设置是否可靠（构造参数 aIsReliable ）（ WsfXIO_Request.hpp ）。
+### 序列化和反序列化
+“谁来调用 `Serialize`”：不是你手动调，而是 **PacketIO（PakTCP_IO / PakUDP_IO）在发送/接收时自动调**。  
+
+“基础类型 vs 自定义类型怎么序列化”**：由 `operator&` 做分发，基础类型走 `PakO/PakI::Serialize` → `GenBuffer::Put/Get`；自定义类型走 `Serialize/Save/Load` 规则（成员函数或非成员函数）。
+
+---
+
+#### 1) Serialize 到底是谁调用的？（发送与接收调用链）
+
+##### 发送链路（以 XIO 为例）
+- 你代码里一般是 `connection->Send(pkt)`，例如 `WsfXIO_Connection::Send`（[WsfXIO_Connection.cpp#L45-L48](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/core/wsf/source/xio/WsfXIO_Connection.cpp#L45-L48)）
+- 它会转到 `WsfXIO_Interface::Send`，再转给 `PakThreadedIO::Send`，最终调用具体 socket I/O 的 `Send`（[PakThreadedIO.cpp#L101-L106](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakThreadedIO.cpp#L101-L106)）
+- 如果是 TCP，真正序列化发生在 `PakTCP_IO::Send(const PakPacket&)` 里：
+  - 它先查 `PakProcessor` 里注册的 PacketInfo（`GetPacketInfo(aPkt.ID())`）
+  - 然后调用 `info->mWriteFn(pkt, PakO)`（[PakTCP_IO.cpp#L73-L88](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakTCP_IO.cpp#L73-L88)）
+
+而这个 `mWriteFn` 是怎么来的？是在注册 packet 时由 `PakProcessor` 生成的函数指针，指向“调用该 packet 的 `Serialize`”：
+
+- `PakProcessorDetail::SerializeBind<PKT_TYPE, PakO>::Serialize` 里面就是 `((PKT_TYPE&)aPkt).Serialize(aBuff)`（[PakProcessor.hpp#L40-L45](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakProcessor.hpp#L40-L45)）
+- 注册时把 `mWriteFn` 绑定到这个函数指针（[PakProcessor.hpp#L261-L268](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakProcessor.hpp#L261-L268)）
+
+**结论**：`Serialize` 是在 “发送时 PakTCP_IO/PakUDP_IO 写包” 阶段由 `PakProcessor` 的 `mWriteFn` 自动调用的，不需要你手动调。
+
+##### 接收链路（同理）
+TCP 接收时，`PakTCP_IO::Receive` 会找到该 packet 的 `mReadFn`，然后调用它读字段：
+
+- [PakTCP_IO.cpp#L252-L254](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakTCP_IO.cpp#L252-L254)
+
+`mReadFn` 同样是 `SerializeBind<PKT_TYPE, PakI>::Serialize`，也就是调用 `pkt.Serialize(PakI)`。
+
+---
+
+#### 2) 基础类型怎么序列化？自定义类型怎么序列化？
+
+##### 2.1 基础类型（int/float/double/unsigned…）
+你在 packet 里写的这一句：
+
+```cpp
+aBuff & mPlatformIndex & mPitchRate & mRollRate & mYawRate & mThrottle;
+```
+
+这里的 `aBuff` 可能是：
+- 发送时：`PakO`（写入）
+- 接收时：`PakI`（读出）
+
+`&` 运算符的实现来自 [PakSerializeImpl.hpp](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerializeImpl.hpp)：
+
+- `operator&(PakO&, T&)` / `operator&(PakI&, T&)` 会通过 traits 分发
+- 对**基础类型**会走：`aAr.Serialize(value)`（[PakSerializeImpl.hpp#L66-L71](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerializeImpl.hpp#L66-L71)）
+
+而 `PakO::Serialize` / `PakI::Serialize` 最终就是对 `GenBuffer` 的 `Put/Get`：
+
+- `PakO::Serialize(const T&)` → `mBufferPtr->Put(aVal)`（[PakO.hpp#L40-L44](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakO.hpp#L40-L44)）
+- `PakI::Serialize(T&)` → `mBufferPtr->Get(aVal)`（[PakI.hpp#L37-L41](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakI.hpp#L37-L41)）
+
+所以基础类型的本质就是：
+- **写**：按顺序把值写进 `GenBuffer`
+- **读**：按相同顺序从 `GenBuffer` 读出来
+
+##### 2.2 自定义类型（struct/class）
+Pak 的规则在 [PakSerialize.hpp](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerialize.hpp#L12-L29) 里写得很清楚：自定义类型要能被序列化，满足以下任意一种即可：
+
+- 类型里定义成员模板函数：`template<typename AR> void Serialize(AR& ar) { ... }`
+- 或者提供非成员 `Serialize(ar, T&)`
+- 或者提供非成员 `Save/Load`
+- 或者是 Pak 已经内置支持的类型（std::string、vector、map 等）
+
+当一个类型不是“基础类型”时，默认分发会走：
+- `PakSerialization::Serialize(ar, value)`，默认实现是 `value.Serialize(ar)`（[PakSerializeImpl.hpp#L24-L28](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerializeImpl.hpp#L24-L28)）
+
+也就是说：**自定义类型最终大概率是调用你定义的 `T::Serialize(ar)`**（除非你提供了更高优先级的非成员 Serialize/Save/Load）。
+
+---
+
+#### 3) 回到你的 FlightControlPkt：它具体序列化了什么？
+
+- 你的 packet 通过 `XIO_DEFINE_PACKET` 生成 `Serialize(aBuff)`，它会先写 XIO 的包头（applicationId/flags/timestamp），再写你的字段（[WsfXIO_Packet.hpp#L92-L100](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/core/wsf/source/xio/WsfXIO_Packet.hpp#L92-L100)）
+- 包头序列化是 `WsfXIO_Packet::Serialize`：`aBuff & mApplicationId & mFlags & mTimeStamp;`（[WsfXIO_Packet.hpp#L63-L69](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/core/wsf/source/xio/WsfXIO_Packet.hpp#L63-L69)）
+- 你的字段序列化就是 `unsigned/double` 这类基础类型，走 `PakO/PakI::Serialize` → `GenBuffer::Put/Get`
+
+---
+
+如果你想彻底“看到写入发生在哪一行”，最关键的两处就是：
+- 发送时真正触发 `pkt.Serialize(PakO)` 的地方：`(*info->mWriteFn)(pkt, *mSerializeWriter)`（[PakTCP_IO.cpp#L77-L81](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakTCP_IO.cpp#L77-L81)）
+- 基础类型真正写入 buffer 的地方：`PakO::Serialize → GenBuffer::Put`（[PakO.hpp#L40-L44](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakO.hpp#L40-L44)）
+
+你如果愿意贴一下 “FlightControlPkt 是在哪里 `Send(pkt)` 的”，我也可以把它完整串成：**发送端调用点 → PakTCP_IO/PakUDP_IO → Serialize → 对端 ReceiveNew → PakProcessor::ProcessPacket → 回调处理函数** 的闭环调用链。
