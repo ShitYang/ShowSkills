@@ -15,3 +15,5 @@ ShowSkills
 
    DBMS
    OS
+   八股
+   afsim
