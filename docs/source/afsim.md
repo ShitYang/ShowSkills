@@ -38,8 +38,56 @@
   - 心跳：`SendHeartbeat()` 构造 `WsfXIO_HeartbeatPkt` 并通过 UDP 广播给所有人（[WsfXIO_Interface.cpp#L646-L654]），接收端 `HandleHeartbeat` 收到后可触发 TCP 连接建立（[WsfXIO_Interface.cpp#L656-L679]）。
   - 发布订阅：发布时会把任意可序列化对象打包到 `GenBuffer`（大端），用 `PakO` 序列化，然后发出去（[WsfXIO_Publisher.hpp#L90-L100]）。
 
-## **把两条链路放到“分布式仿真”里怎么理解**
+##### **把两条链路放到“分布式仿真”里怎么理解**
 - **DIS**：负责“不同仿真器/不同进程之间的实体状态同步”（标准 PDU、UDP、多播/广播、`pdu->Process()` 更新平台）。
 - **XIO**：负责“AFSIM 生态内部的控制/查询/发布订阅”（心跳发现 + TCP/UDP，Packet 注册分发，应用级消息）。
 
 如果你告诉我你关心的“数据”具体是哪类（实体位置、轨迹 Track、指令控制、传感器报告等），我可以把对应的 packet/PDU 类型再精确到具体类名和处理函数链路。
+### DIS服务于XIO
+工程里交叉点 **非常明确**：在 `core/wsf/source/xio_sim` 里专门有一层把 **XIO 和 DIS 绑定起来**（不是 xio 的底层通信层去“调用 DIS 协议栈”，而是“仿真集成层”把两者的信息互通）。
+
+**主要交叉点有三类：**
+
+#### **1) XIO 作为 DIS 的“信息/控制通道”**
+XIO 定义了与 DIS 相关的 XIO Packet，并提供服务（Service）去处理这些请求/订阅。
+
+- `WsfXIO_DisService`：XIO 服务端，内部直接持有 `WsfDisInterface*`
+  - 见 [WsfXIO_DisService.hpp]：
+    - `WsfDisInterface* mDisInterfacePtr;`
+    - 处理 `WsfXIO_RequestDisDataPkt`（请求 DIS 数据）
+    - 发送 `WsfXIO_DisPlatformInfoPkt`（返回平台/实体的 DIS 相关信息）
+
+这说明：**XIO 可以让外部应用（如 Warlock/工具）请求“DIS 视角”的数据**，而不用自己实现 DIS。
+
+#### **2) XIO 订阅/推送 DIS 平台信息（PlatformInfo）**
+`WsfXIO_DisService` 还订阅仿真平台生命周期事件，然后通过 XIO 推送“平台对应的 DIS 信息”。
+
+- [WsfXIO_DisService.hpp]：
+  - `PlatformInitialized(...)`
+  - `PlatformDeleted(...)`
+  - `SendPlatformInfo(...)`
+  - `PackPlatformInfo(...)`
+
+这类交叉的含义是：**DIS 负责实体同步；XIO 负责把“有哪些实体、实体对应的 DIS 元数据、状态摘要”等以工具友好的方式同步给外部应用。**
+
+#### **3) 覆盖/扩展 DIS 平台创建与消息路由**
+还有一层扩展叫 `WsfXIO_DisExtension`，它的注释就写明了它要“override DIS 平台创建”和“通过 XIO 路由 WsfMessage”。
+
+- [WsfXIO_DisExtension.hpp]：
+  - “Overrides the creation of DIS platforms.”
+  - “Provides translation and routing of WsfMessage's sent over XIO”
+
+这类交叉通常用于：**在分布式应用/工具链中，让某些“原本走 DIS 或依赖 DIS 的信息”可以通过 XIO 更灵活地传递/映射。**
+
+![alt text](image-13.png)
+![alt text](image-14.png)
+![alt text](image-15.png)
+DIS遵循IEEE协议，还有其他的分布式仿真协议，他们公用ExtInterface接口。
+
+---
+
+#### **一句话总结**
+- **底层上**：XIO 和 DIS 是两套独立通信机制。
+- **集成上**：在 `xio_sim` 这层，XIO **会读取/使用 DIS 接口（WsfDisInterface）提供的信息**，并把这些信息包装成 XIO 的请求/响应或订阅推送给外部应用；同时也可能通过扩展点影响 DIS 平台创建/消息路由。
+
+如果你想我把“交叉调用链”画出来（例如 `WsfXIO_RequestDisDataPkt → WsfXIO_DisService::HandleRequest → WsfDisInterface/... → WsfXIO_DisPlatformInfoPkt`），我可以继续把对应 `.cpp` 的关键实现段落也定位出来。
