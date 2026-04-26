@@ -1,0 +1,284 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="cn" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBMS和OS的纠葛 &mdash; ShowSkills  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=210c1e71"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Page" href="OS.html" />
+    <link rel="prev" title="ShowSkills" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ShowSkills
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DBMS和OS的纠葛</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">预先分配好内存</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mmap">不要使用mmap</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#page-layout">Page Layout</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#turple-orientation-storage">Turple-Orientation Storage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#index-orientation-storage">Index-Orientation Storage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#log-record-storage">Log-Record Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#arc">ARC算法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2"></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id3">即使虚拟地址连续，物理地址也不一定连续</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#hash">Hash</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id4">静态Hash</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linear-probe-hashing">Linear Probe Hashing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id5">发生删除时</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cuckoo-hashing">Cuckoo Hashing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">动态Hash</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#chained-hashing">Chained Hashing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extendible-hashing">Extendible Hashing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#linear-hashing">Linear Hashing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="OS.html">Page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%E5%85%AB%E8%82%A1.html">计算机网络</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%E5%85%AB%E8%82%A1.html#id5">操作系统</a></li>
+<li class="toctree-l1"><a class="reference internal" href="afsim.html">AFSim</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ShowSkills</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">DBMS和OS的纠葛</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/DBMS.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dbmsos">
+<h1>DBMS和OS的纠葛<a class="headerlink" href="#dbmsos" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>预先分配好内存<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>当使用DBMS时，总是需要摆脱OS的页面交换等机制，因为DBMS维护的页面之间是有逻辑关系的，可以优化，而OS不知道。</p>
+<ol class="arabic simple">
+<li><p>DBMS会申请一片较大的区域为Buffer Pool，目的是摆脱malloc</p></li>
+<li><p>DBMS维护Buffer Pool自己页面的换入换出。<strong>但是</strong>需要注意，OS仍然会换入换出页面，即使他是Buffer Pool内的页面。所以一般DBMS独占整个系统。</p></li>
+</ol>
+<blockquote>
+<div><p>为了防止上述灾难发生，成熟的数据库系统（如 MySQL InnoDB）和运维规范通常有两道防线，确保 Buffer Pool 牢牢锁在物理内存中：</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>第一道防线：软件层面的“锁定”
+DBMS 会通过系统调用告诉操作系统：“这块内存非常重要，绝对不允许换出”。</p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>mlock() / mlockall()：MySQL 在初始化 Buffer Pool 时，会尝试调用 mlock() 系统调用。这会将 Buffer Pool 对应的虚拟内存地址锁定在物理内存中。只要锁定了，Linux 的 kswapd 线程在扫描内存时，会直接跳过这些页，无论内存多紧张都不会把它们 Swap 出去。</p></li>
+<li><p>O_DIRECT：虽然主要用于绕过 OS 的 Page Cache，但它配合内存分配策略，也减少了 OS 对这块内存的干预能力。</p></li>
+</ol>
+<blockquote>
+<div><blockquote>
+<div><ul class="simple">
+<li><p>第二道防线：运维层面的“隔离”</p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>正如你之前的笔记所提到的，我们会配置操作系统参数。
+vm.swappiness = 0 (或 1)：在 Linux 中，这个参数控制内核使用 Swap 的倾向。设置为 0 或 1 意味着“除非发生内存溢出（OOM），否则尽量不要使用 Swap”。</p></li>
+<li><p>独占资源：通常数据库服务器会预留足够的内存给 OS（例如 20%），剩下的全给 Buffer Pool，确保物理上就不会触发 Swap 机制。</p></li>
+</ol>
+</section>
+<section id="mmap">
+<h2>不要使用mmap<a class="headerlink" href="#mmap" title="Link to this heading"></a></h2>
+<p>对于数据库文件，直观想法是mmap映射到内存，然后直接读取，但是这就把Page的控制权交给OS。</p>
+<p><strong>文件映射mmap</strong></p>
+<div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="s">&quot;test.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">O_RDWR</span><span class="p">);</span><span class="w"> </span><span class="c1">// 1. 先打开文件获取 fd</span>
+<span class="c1">// 2. 传入 fd</span>
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mmap</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="n">PROT_READ</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">PROT_WRITE</span><span class="p">,</span><span class="w"> </span><span class="n">MAP_SHARED</span><span class="p">,</span><span class="w"> </span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><strong>匿名mmap</strong></p>
+<div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 直接传入 -1，并加上 MAP_ANONYMOUS</span>
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mmap</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="n">PROT_READ</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">PROT_WRITE</span><span class="p">,</span><span class="w"> </span><span class="n">MAP_SHARED</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">MAP_ANONYMOUS</span><span class="p">,</span><span class="w"> </span><span class="mi">-1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>应当通过read，将对应文件的部分offset（Page），读取到进程地址空间的对应区域。</p>
+</section>
+</section>
+<section id="page-layout">
+<h1>Page Layout<a class="headerlink" href="#page-layout" title="Link to this heading"></a></h1>
+<section id="turple-orientation-storage">
+<h2>Turple-Orientation Storage<a class="headerlink" href="#turple-orientation-storage" title="Link to this heading"></a></h2>
+</section>
+<section id="index-orientation-storage">
+<h2>Index-Orientation Storage<a class="headerlink" href="#index-orientation-storage" title="Link to this heading"></a></h2>
+</section>
+<section id="log-record-storage">
+<h2>Log-Record Storage<a class="headerlink" href="#log-record-storage" title="Link to this heading"></a></h2>
+</section>
+</section>
+<section id="arc">
+<h1>ARC算法<a class="headerlink" href="#arc" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2><a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+</section>
+</section>
+<section id="id3">
+<h1>即使虚拟地址连续，物理地址也不一定连续<a class="headerlink" href="#id3" title="Link to this heading"></a></h1>
+</section>
+<section id="hash">
+<h1>Hash<a class="headerlink" href="#hash" title="Link to this heading"></a></h1>
+<section id="id4">
+<h2>静态Hash<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>需要DBMS预先知道Key的范围，即想存入的数量。</p>
+<blockquote>
+<div><blockquote>
+<div><p>以下都是解决冲突的策略</p>
+</div></blockquote>
+</div></blockquote>
+<section id="linear-probe-hashing">
+<h3>Linear Probe Hashing<a class="headerlink" href="#linear-probe-hashing" title="Link to this heading"></a></h3>
+<p>Hash表中要存Key以及Value，让发生Hash冲突时，可以对比下一个槽位是否空缺。(但是Key和Value要是定长的)
+当装载因子过高，会导致冲突增加。需要创建新表，将旧的全部迁移到新表中。
+<img alt="Line Probe" src="_images/image.png" /></p>
+<section id="id5">
+<h4>发生删除时<a class="headerlink" href="#id5" title="Link to this heading"></a></h4>
+<section id="movement">
+<h5>Movement<a class="headerlink" href="#movement" title="Link to this heading"></a></h5>
+<p>开销很大
+<img alt="alt text" src="_images/image-1.png" /></p>
+</section>
+<section id="tombstone">
+<h5>Tombstone<a class="headerlink" href="#tombstone" title="Link to this heading"></a></h5>
+<p>开销小。以下图为例，删除了D之后，如果我访问D，知道表中第二个空位，直接返回空值。
+<img alt="alt text" src="_images/image-2.png" /></p>
+</section>
+</section>
+</section>
+<section id="cuckoo-hashing">
+<h3>Cuckoo Hashing<a class="headerlink" href="#cuckoo-hashing" title="Link to this heading"></a></h3>
+<p>运用多个Hash函数，当两个都发生冲突时，他会把其中一个原主赶走。
+<img alt="alt text" src="_images/image-3.png" />
+被赶走的，继续hash，从（除了被赶走的位置）其他位置开始，继续Hash。以此类推。
+<img alt="alt text" src="_images/image-4.png" />
+<strong>实际上，Linear Probe Hash 非常快</strong></p>
+<blockquote>
+<div><blockquote>
+<div><p>以上都是解决冲突的策略</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+<section id="id6">
+<h2>动态Hash<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<blockquote>
+<div><blockquote>
+<div><p>以下都是动态调整Hash表的策略</p>
+</div></blockquote>
+</div></blockquote>
+<section id="chained-hashing">
+<h3>Chained Hashing<a class="headerlink" href="#chained-hashing" title="Link to this heading"></a></h3>
+<p><img alt="alt text" src="_images/image-5.png" /></p>
+</section>
+<section id="extendible-hashing">
+<h3>Extendible Hashing<a class="headerlink" href="#extendible-hashing" title="Link to this heading"></a></h3>
+<p>Chained Hashing的改进</p>
+</section>
+<section id="linear-hashing">
+<h3>Linear Hashing<a class="headerlink" href="#linear-hashing" title="Link to this heading"></a></h3>
+<p>特别神奇的Hash方式.....</p>
+<blockquote>
+<div><blockquote>
+<div><p>以上都是动态调整Hash表的策略</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="ShowSkills" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="OS.html" class="btn btn-neutral float-right" title="Page" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, yk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="cn" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算机网络 &mdash; ShowSkills  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=210c1e71"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="AFSim" href="afsim.html" />
+    <link rel="prev" title="Page" href="OS.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ShowSkills
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html">DBMS和OS的纠葛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#page-layout">Page Layout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#arc">ARC算法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#id3">即使虚拟地址连续，物理地址也不一定连续</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#hash">Hash</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OS.html">Page</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">计算机网络</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tcp">TCP异常连接</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">宕机和进程崩溃</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">握手丢失</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">挥手丢失</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id5">操作系统</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id6">管道，重定向</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">内核级重定向</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">用户级重定向</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">文件系统</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">路径查找过程</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#home-user-test-txt">查找 /home/user/test.txt</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">哈希一致性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#io">IO多路复用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">边缘触发和水平触发</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#et">ET</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lt">LT</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="afsim.html">AFSim</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ShowSkills</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">计算机网络</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/八股.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>计算机网络<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="tcp">
+<h2>TCP异常连接<a class="headerlink" href="#tcp" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3>宕机和进程崩溃<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p><img alt="alt text" src="_images/image-6.png" />
+https://xiaolincoding.com/network/3_tcp/tcp_down_and_crash.html#%E8%BF%9B%E7%A8%8B%E5%B4%A9%E6%BA%83</p>
+<ol class="arabic simple">
+<li><p>在发数据的情况下</p></li>
+</ol>
+<blockquote>
+<div><p>如果是进程崩溃，内核可以优雅地和peer完成4次挥手。但是宕机又重启，且有数据传输，会回RST。</p>
+</div></blockquote>
+<blockquote>
+<div><p>如果宕机未重启，会超时重传，根据tcp_retries以及RTO，达到阈值后，断开连接</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>不发数据，就以来KeepAlive报文探查，但需要很长时间。一般上层会进行探查，如http的KeepAlive和KeepAliveTimeout</p></li>
+</ol>
+</section>
+<section id="id3">
+<h3>握手丢失<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>第一次挥手丢失，重传tcp_syn_retries次，Close连接</p></li>
+<li><p>第二次丢失，双方都会重传
+<img alt="alt text" src="_images/image-7.png" /></p></li>
+<li><p>第三次丢失，重传SYN_ACK。注意，接受方（服务端）不需要那个丢失的 ACK 了，只要后续报文没丢，连接就能正常建立。</p></li>
+</ol>
+</section>
+<section id="id4">
+<h3>挥手丢失<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+</section>
+</section>
+</section>
+<section id="id5">
+<h1>操作系统<a class="headerlink" href="#id5" title="Link to this heading"></a></h1>
+<section id="id6">
+<h2>管道，重定向<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>内核级重定向<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p><img alt="alt text" src="_images/image-8.png" />
+可以用dup进行保存，并恢复，当dup2完成后，原来的fd被删除了
+<img alt="alt text" src="_images/image-9.png" /></p>
+</section>
+<section id="id8">
+<h3>用户级重定向<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+
+int main() {
+    // 1. 保存原来的缓冲区
+    std::streambuf* old_buf = std::cout.rdbuf();
+    
+    // 2. 打开文件，把 cout 重定向到文件
+    std::ofstream file(&quot;output.txt&quot;);
+    std::cout.rdbuf(file.rdbuf());
+    
+    // 3. 这个输出会进文件，不是屏幕
+    std::cout &lt;&lt; &quot;Hello, redirected!&quot; &lt;&lt; std::endl;
+    
+    // 4. 恢复
+    std::cout.rdbuf(old_buf);
+    
+    // 5. 这个输出回到屏幕
+    std::cout &lt;&lt; &quot;Back to console&quot; &lt;&lt; std::endl;
+    
+    return 0;
+}
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id9">
+<h2>文件系统<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>每个文件都对应有两个数据结构inode和dentry，dentry并不需要落盘，实时创建。</p>
+<p>inode不会记录文件名或目录名，dentry用来做文件名到inode的映射。</p>
+<p><img alt="alt text" src="_images/image-10.png" /></p>
+<section id="id10">
+<h3>路径查找过程<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>操作系统启动时 dentry cache 是空的，但仍然能根据路径找到 inode，流程如下：</p>
+<section id="home-user-test-txt">
+<h4>查找 /home/user/test.txt<a class="headerlink" href="#home-user-test-txt" title="Link to this heading"></a></h4>
+<ol class="arabic">
+<li><p>根目录 inode</p>
+<ul class="simple">
+<li><p>根目录 / 的 inode 是已知/固定的，内核直接知道其 inode 号</p></li>
+</ul>
+</li>
+<li><p>逐级解析</p>
+<ul class="simple">
+<li><p>读取根目录文件内容 → 找到 home 对应的 inode 号</p></li>
+<li><p>根据 inode 加载 home 目录 → 在其内容中找到 user</p></li>
+<li><p>根据 inode 加载 user 目录 → 找到 test.txt</p></li>
+</ul>
+</li>
+<li><p>创建 dentry</p>
+<ul class="simple">
+<li><p>每解析一层路径，就创建对应的 dentry 并加入缓存</p></li>
+<li><p>下次再访问同样的路径时就能直接命中缓存</p></li>
+</ul>
+<p class="rubric" id="id11">存储结构</p>
+<p>一般将逻辑块（4KB），分为块组。每个块组内有，超级块、inode表、数据块、块组信息(inode位图、块位图)等。
+注意位图是管理空闲块的。
+对于非空闲块，在Unix中，往往是通过inode的索引结构管理。可能有一二级索引、连续块、隐式链表等。</p>
+</li>
+</ol>
+</section>
+</section>
+</section>
+<section id="id12">
+<h2>哈希一致性<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>主要是解决通过hash进行负载均衡的分配时，再迁移过程中，出现的迁移量很大的问题。
+<img alt="alt text" src="_images/image-11.png" />
+原环：
+Node A ──→ Node B ──→ Node C ──→ (回到 Node A)</p>
+<p>新增 Node D 放在 Node A 和 Node B 之间：
+Node A ──→ Node D ──→ Node B ──→ Node C ──→ (回到 Node A)</p>
+<p>受影响的数据：
+只有原本在环上位于 (Node A, Node D] 区间的 key 需要从 Node B 迁移到 Node D
+其他所有 key 完全不受影响</p>
+</section>
+<section id="io">
+<h2>IO多路复用<a class="headerlink" href="#io" title="Link to this heading"></a></h2>
+<section id="id13">
+<h3>边缘触发和水平触发<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<section id="et">
+<h4>ET<a class="headerlink" href="#et" title="Link to this heading"></a></h4>
+<p>当缓冲区状态从空变成非空时，会触发IO事件。
+如果你处理了这次IO，但是缓冲区还有剩余数据。
+除非下次通知，否则你并不知道还有数据，就会丢失数据。</p>
+</section>
+<section id="lt">
+<h4>LT<a class="headerlink" href="#lt" title="Link to this heading"></a></h4>
+<p>感觉ET很糟糕，为什么不同LT？
+<img alt="alt text" src="_images/image-12.png" /></p>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="OS.html" class="btn btn-neutral float-left" title="Page" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="afsim.html" class="btn btn-neutral float-right" title="AFSim" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, yk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

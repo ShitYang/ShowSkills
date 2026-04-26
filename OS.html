@@ -1,0 +1,155 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="cn" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page &mdash; ShowSkills  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=210c1e71"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="计算机网络" href="%E5%85%AB%E8%82%A1.html" />
+    <link rel="prev" title="DBMS和OS的纠葛" href="DBMS.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ShowSkills
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html">DBMS和OS的纠葛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#page-layout">Page Layout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#arc">ARC算法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#id3">即使虚拟地址连续，物理地址也不一定连续</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#hash">Hash</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Page</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">大小</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#table">Table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">内核地址空间</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">缺页中断</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="%E5%85%AB%E8%82%A1.html">计算机网络</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%E5%85%AB%E8%82%A1.html#id5">操作系统</a></li>
+<li class="toctree-l1"><a class="reference internal" href="afsim.html">AFSim</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ShowSkills</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Page</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/OS.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="page">
+<h1>Page<a class="headerlink" href="#page" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>大小<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>一般是4KB，同Disk的块大小相同。</p>
+</section>
+<section id="table">
+<h2>Table<a class="headerlink" href="#table" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Page Table维护了进程中分配的页。当程序需要访问一个虚拟地址时，首先访问TLB（快表），如果Miss了，再从内存中取出页表，进行物理地址转换。</p></li>
+<li><p>需要注意，内核地址空间，维护了PCB，其中包括页表的物理地址。</p></li>
+</ol>
+</section>
+<section id="id2">
+<h2>内核地址空间<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>内核地址空间，包括私有和公共的部分</p>
+<ol class="arabic simple">
+<li><p>私有由进程私有，包含PCB，进程上下文切换等</p></li>
+<li><p>公共部分包括Page Cache，缓存那些进程的公共页.read系统调用会先将页从磁盘拷贝到Page Cache，再拷贝到进程地址空间中
+DBMS往往会跳过Page Cache，因为会多一次Page拷贝，通过Read系统调用的OIDirect标志位实现。</p></li>
+</ol>
+</section>
+<section id="id3">
+<h2>缺页中断<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>当内核接收到缺页异常后，它会进行最终的裁决。这个过程不仅仅是看页表，而是要检查这个访问地址是否属于该进程合法的地址空间范围。</p>
+<ol class="arabic simple">
+<li><p>检查虚拟内存区域（VMA）
+在 Linux 中，每个进程都有一个 vm_area_struct (VMA) 结构体链表，它描述了进程所有合法的内存区域（如代码段、数据段、堆、栈等）。</p></li>
+<li><p>最终判决
+内核会根据引发异常的虚拟地址，去查找对应的 VMA。
+如果找不到对应的 VMA，说明这个地址完全不在进程被分配的内存范围内（例如，访问了一个野指针或空指针）。这时，内核会判定为非法访问，并向该进程发送 SIGSEGV 信号，也就是我们常说的段错误。
+如果找到了 VMA，但访问违反了权限（如向只读段写入），内核同样会发送 SIGSEGV 信号。</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="DBMS.html" class="btn btn-neutral float-left" title="DBMS和OS的纠葛" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="%E5%85%AB%E8%82%A1.html" class="btn btn-neutral float-right" title="计算机网络" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, yk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

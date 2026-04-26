@@ -1,0 +1,674 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="cn" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AFSim &mdash; ShowSkills  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=210c1e71"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="计算机网络" href="%E5%85%AB%E8%82%A1.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ShowSkills
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html">DBMS和OS的纠葛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#page-layout">Page Layout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#arc">ARC算法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#id3">即使虚拟地址连续，物理地址也不一定连续</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DBMS.html#hash">Hash</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OS.html">Page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%E5%85%AB%E8%82%A1.html">计算机网络</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%E5%85%AB%E8%82%A1.html#id5">操作系统</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AFSim</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">分布式仿真</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#disxio">DIS和XIO</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dis"><strong>DIS：实体状态同步链路</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xio-afsim-tcp-udp"><strong>XIO：AFSIM 内部生态通信链路（心跳发现 + TCP/UDP 数据）</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">DIS服务于XIO</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xio-dis"><strong>1) XIO 作为 DIS 的“信息/控制通道”</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xio-dis-platforminfo"><strong>2) XIO 订阅/推送 DIS 平台信息（PlatformInfo）</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4"><strong>3) 覆盖/扩展 DIS 平台创建与消息路由</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5"><strong>一句话总结</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">数据流转</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pkt">单向 (Pkt)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#requestquery">双向（Request和Query）</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">序列化和反序列化</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#serialize">1) Serialize 到底是谁调用的？（发送与接收调用链）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10">2) 基础类型怎么序列化？自定义类型怎么序列化？</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flightcontrolpkt">3) 回到你的 FlightControlPkt：它具体序列化了什么？</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sfinae">SFINAE</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#socket">Socket</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id11">三个模糊概念</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#paktcp-server-mconnectionlist">1) PakTCP_Server::mConnectionList 是什么</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#paktcp-connector">2) PakTCP_Connector 是什么</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wsfxio-interface-mconnections-wsfxio-connection">3) WsfXIO_Interface::mConnections / WsfXIO_Connection 是什么（重点）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">它们三者怎么串起来（XIO 的实际流程）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">类功能介绍</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#class-packetio-export-paktcp-io-public-paksocketio">class PACKETIO_EXPORT PakTCP_IO : public PakSocketIO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#class-genio-export-gentcp-connection-public-gensocketconnection">class GENIO_EXPORT GenTCP_Connection : public GenSocketConnection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#class-genio-export-genudp-connection-public-gensocketconnection">class GENIO_EXPORT GenUDP_Connection : public GenSocketConnection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ShowSkills</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">AFSim</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/afsim.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="afsim">
+<h1>AFSim<a class="headerlink" href="#afsim" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>分布式仿真<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="disxio">
+<h3>DIS和XIO<a class="headerlink" href="#disxio" title="Link to this heading"></a></h3>
+<p>下面按“接收 → 处理 → 发送”的顺序，把 <strong>DIS</strong> 和 <strong>XIO</strong> 两条链路分别串起来（分布式场景里通常两者并行存在）。</p>
+<section id="dis">
+<h4><strong>DIS：实体状态同步链路</strong><a class="headerlink" href="#dis" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>接收（网络 → PDU 对象）</strong></p>
+<ul>
+<li><p>UDP Socket 收包后写入 GenIO 的接收缓冲：<code class="docutils literal notranslate"><span class="pre">GenUDP_IO::Receive</span></code> 会重置接收缓冲并调用 <code class="docutils literal notranslate"><span class="pre">ReceiveBuffer(...)</span></code> 把数据读进缓冲区（[GenUDP_IO.cpp#L42-L61]）。</p></li>
+<li><p>DIS 的 UDP Device 从 GenIO 缓冲中取数据，够一个 PDU 就解析：<code class="docutils literal notranslate"><span class="pre">WsfDisUDP_Device::GetPdu</span></code> 里调用 <code class="docutils literal notranslate"><span class="pre">mGenIOPtr-&gt;Receive(0)</span></code>，然后 <code class="docutils literal notranslate"><span class="pre">DisPdu::Create(*mGenIOPtr,</span> <span class="pre">aPduFactoryPtr)</span></code> 生成具体 PDU（[WsfDisUDP_Device.cpp#L126-L158]）。</p></li>
+</ul>
+</li>
+<li><p><strong>处理（PDU 对象 → 仿真对象/状态）</strong></p>
+<ul>
+<li><p>每个仿真步由 <code class="docutils literal notranslate"><span class="pre">WsfDisInterface::AdvanceTime</span></code> 拉取并处理所有待处理 PDU：过滤后直接调用 <code class="docutils literal notranslate"><span class="pre">pduPtr-&gt;Process()</span></code>（[WsfDisInterface.cpp#L1203-L1275]）。</p></li>
+<li><p>以最关键的 Entity State 为例：<code class="docutils literal notranslate"><span class="pre">WsfDisEntityState::Process()</span></code> 会</p>
+<ul>
+<li><p>忽略影子站点（<code class="docutils literal notranslate"><span class="pre">cSHADOW_SITE</span></code>）的 PDU；</p></li>
+<li><p>查本地是否已有对应实体；没有则创建外部平台，有则更新平台状态（[WsfDisEntityState.cpp#L68-L134]）。</p></li>
+</ul>
+</li>
+<li><p>“新实体 → 本地外部平台（你说的 Shadow/外部实体落地）”的核心入口是 <code class="docutils literal notranslate"><span class="pre">WsfDisInterface::AddExternalPlatformP</span></code>：选择平台类型、创建平台、必要时剥离组件、挂 <code class="docutils literal notranslate"><span class="pre">WsfDisMover</span></code>，然后 <code class="docutils literal notranslate"><span class="pre">Simulation.AddPlatform(...)</span></code>（[WsfDisInterface.cpp#L506-L646]）。</p></li>
+<li><p>“ShadowPlatform（调试影子）”是可选逻辑：满足 shadow 配置时 <code class="docutils literal notranslate"><span class="pre">AddShadowPlatform(...)</span></code> 额外创建 <code class="docutils literal notranslate"><span class="pre">_shadow</span></code> 平台并设置 <code class="docutils literal notranslate"><span class="pre">cSHADOW_SITE</span></code>）。</p></li>
+</ul>
+</li>
+<li><p><strong>发送（仿真状态 → 网络）</strong></p>
+<ul>
+<li><p>发送最终落在 Device 的 <code class="docutils literal notranslate"><span class="pre">PutPduP</span></code>：设置时间戳/仿真时间，<code class="docutils literal notranslate"><span class="pre">aPdu.Put(*mGenIOPtr)</span></code> 序列化进发送缓冲，然后 <code class="docutils literal notranslate"><span class="pre">mGenIOPtr-&gt;Send()</span></code> 发 UDP 包（[WsfDisUDP_Device.cpp#L160-L174]）。</p></li>
+<li><p>触发“什么时候发”通常是：心跳、阈值（位置/姿态变化）、以及特定事件（开火/爆炸等）。具体策略在 <code class="docutils literal notranslate"><span class="pre">WsfDisPlatform/WsfDisInterface</span></code> 的更新逻辑里决定，然后丢给 Device 发。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="xio-afsim-tcp-udp">
+<h4><strong>XIO：AFSIM 内部生态通信链路（心跳发现 + TCP/UDP 数据）</strong><a class="headerlink" href="#xio-afsim-tcp-udp" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>接收（网络 → XIO Packet 对象）</strong></p>
+<ul>
+<li><p>XIO 在 <code class="docutils literal notranslate"><span class="pre">Initialize</span></code> 里启动连接管理（监听 TCP、建立 UDP 连接等）（[WsfXIO_Interface.cpp#L155-L192]）。</p></li>
+<li><p>UDP/Broadcast/Multicast 目标连接通过 <code class="docutils literal notranslate"><span class="pre">ConnectToTarget</span></code> 建立：内部创建 <code class="docutils literal notranslate"><span class="pre">GenUDP_IO</span></code>，包装成 <code class="docutils literal notranslate"><span class="pre">PakUDP_IO</span></code>，交给 <code class="docutils literal notranslate"><span class="pre">mThreadedIO</span></code> 异步收包（[WsfXIO_Interface.cpp#L194-L273]）。</p></li>
+<li><p>每帧调用 <code class="docutils literal notranslate"><span class="pre">WsfXIO_Interface::AdvanceTime</span></code>，会执行 <code class="docutils literal notranslate"><span class="pre">ProcessMessages(aSimTime)</span></code> 处理所有已收包（[WsfXIO_Interface.cpp#L496-L541]）。</p></li>
+</ul>
+</li>
+<li><p><strong>处理（XIO Packet → 回调/发布订阅/请求响应）</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">ProcessMessages</span></code> 从线程 I/O 中 <code class="docutils literal notranslate"><span class="pre">Extract</span></code> 出 packet 列表，对“同步包”做时间戳换算并可能缓存延迟处理，然后用 <code class="docutils literal notranslate"><span class="pre">PakProcessor::ProcessPacket(&amp;pkt,</span> <span class="pre">true)</span></code> 分发给具体 packet 类型处理器（[WsfXIO_Interface.cpp#L544-L579]）。</p></li>
+<li><p>packet 类型注册在 <code class="docutils literal notranslate"><span class="pre">WsfXIO_PacketRegistry::RegisterPackets</span></code>，未注册的包不能收发（[WsfXIO_PacketRegistry.cpp#L18-L66]）。</p></li>
+<li><p>XIO 的“业务处理”主要靠回调绑定：构造函数里把心跳、初始化、服务发现等 packet 绑定到对应 handler（[WsfXIO_Interface.cpp#L83-L99]）。</p></li>
+</ul>
+</li>
+<li><p><strong>发送（发布/请求/心跳 → 网络）</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">WsfXIO_Interface::Send/SendToAll*</span></code> 会统一打上 <code class="docutils literal notranslate"><span class="pre">ApplicationId</span></code> 和 <code class="docutils literal notranslate"><span class="pre">TimeStamp</span></code>，然后交给 <code class="docutils literal notranslate"><span class="pre">mThreadedIO.Send(...)</span></code>（[WsfXIO_Interface.cpp#L353-L412]）。</p></li>
+<li><p>心跳：<code class="docutils literal notranslate"><span class="pre">SendHeartbeat()</span></code> 构造 <code class="docutils literal notranslate"><span class="pre">WsfXIO_HeartbeatPkt</span></code> 并通过 UDP 广播给所有人（[WsfXIO_Interface.cpp#L646-L654]），接收端 <code class="docutils literal notranslate"><span class="pre">HandleHeartbeat</span></code> 收到后可触发 TCP 连接建立（[WsfXIO_Interface.cpp#L656-L679]）。</p></li>
+<li><p>发布订阅：发布时会把任意可序列化对象打包到 <code class="docutils literal notranslate"><span class="pre">GenBuffer</span></code>（大端），用 <code class="docutils literal notranslate"><span class="pre">PakO</span></code> 序列化，然后发出去（[WsfXIO_Publisher.hpp#L90-L100]）。</p></li>
+</ul>
+</li>
+</ul>
+<section id="id2">
+<h5><strong>把两条链路放到“分布式仿真”里怎么理解</strong><a class="headerlink" href="#id2" title="Link to this heading"></a></h5>
+<ul class="simple">
+<li><p><strong>DIS</strong>：负责“不同仿真器/不同进程之间的实体状态同步”（标准 PDU、UDP、多播/广播、<code class="docutils literal notranslate"><span class="pre">pdu-&gt;Process()</span></code> 更新平台）。</p></li>
+<li><p><strong>XIO</strong>：负责“AFSIM 生态内部的控制/查询/发布订阅”（心跳发现 + TCP/UDP，Packet 注册分发，应用级消息）。</p></li>
+</ul>
+<p>如果你告诉我你关心的“数据”具体是哪类（实体位置、轨迹 Track、指令控制、传感器报告等），我可以把对应的 packet/PDU 类型再精确到具体类名和处理函数链路。</p>
+</section>
+</section>
+</section>
+<section id="id3">
+<h3>DIS服务于XIO<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>工程里交叉点 <strong>非常明确</strong>：在 <code class="docutils literal notranslate"><span class="pre">core/wsf/source/xio_sim</span></code> 里专门有一层把 <strong>XIO 和 DIS 绑定起来</strong>（不是 xio 的底层通信层去“调用 DIS 协议栈”，而是“仿真集成层”把两者的信息互通）。</p>
+<p><strong>主要交叉点有三类：</strong></p>
+<section id="xio-dis">
+<h4><strong>1) XIO 作为 DIS 的“信息/控制通道”</strong><a class="headerlink" href="#xio-dis" title="Link to this heading"></a></h4>
+<p>XIO 定义了与 DIS 相关的 XIO Packet，并提供服务（Service）去处理这些请求/订阅。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WsfXIO_DisService</span></code>：XIO 服务端，内部直接持有 <code class="docutils literal notranslate"><span class="pre">WsfDisInterface*</span></code></p>
+<ul>
+<li><p>见 [WsfXIO_DisService.hpp]：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">WsfDisInterface*</span> <span class="pre">mDisInterfacePtr;</span></code></p></li>
+<li><p>处理 <code class="docutils literal notranslate"><span class="pre">WsfXIO_RequestDisDataPkt</span></code>（请求 DIS 数据）</p></li>
+<li><p>发送 <code class="docutils literal notranslate"><span class="pre">WsfXIO_DisPlatformInfoPkt</span></code>（返回平台/实体的 DIS 相关信息）</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>这说明：<strong>XIO 可以让外部应用（如 Warlock/工具）请求“DIS 视角”的数据</strong>，而不用自己实现 DIS。</p>
+</section>
+<section id="xio-dis-platforminfo">
+<h4><strong>2) XIO 订阅/推送 DIS 平台信息（PlatformInfo）</strong><a class="headerlink" href="#xio-dis-platforminfo" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">WsfXIO_DisService</span></code> 还订阅仿真平台生命周期事件，然后通过 XIO 推送“平台对应的 DIS 信息”。</p>
+<ul class="simple">
+<li><p>[WsfXIO_DisService.hpp]：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">PlatformInitialized(...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PlatformDeleted(...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SendPlatformInfo(...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PackPlatformInfo(...)</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>这类交叉的含义是：<strong>DIS 负责实体同步；XIO 负责把“有哪些实体、实体对应的 DIS 元数据、状态摘要”等以工具友好的方式同步给外部应用。</strong></p>
+</section>
+<section id="id4">
+<h4><strong>3) 覆盖/扩展 DIS 平台创建与消息路由</strong><a class="headerlink" href="#id4" title="Link to this heading"></a></h4>
+<p>还有一层扩展叫 <code class="docutils literal notranslate"><span class="pre">WsfXIO_DisExtension</span></code>，它的注释就写明了它要“override DIS 平台创建”和“通过 XIO 路由 WsfMessage”。</p>
+<ul class="simple">
+<li><p>[WsfXIO_DisExtension.hpp]：</p>
+<ul>
+<li><p>“Overrides the creation of DIS platforms.”</p></li>
+<li><p>“Provides translation and routing of WsfMessage's sent over XIO”</p></li>
+</ul>
+</li>
+</ul>
+<p>这类交叉通常用于：<strong>在分布式应用/工具链中，让某些“原本走 DIS 或依赖 DIS 的信息”可以通过 XIO 更灵活地传递/映射。</strong></p>
+<p><img alt="alt text" src="_images/image-13.png" />
+<img alt="alt text" src="_images/image-14.png" />
+<img alt="alt text" src="_images/image-15.png" />
+DIS遵循IEEE协议，还有其他的分布式仿真协议，他们公用ExtInterface接口。</p>
+</section>
+<hr class="docutils" />
+<section id="id5">
+<h4><strong>一句话总结</strong><a class="headerlink" href="#id5" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>底层上</strong>：XIO 和 DIS 是两套独立通信机制。</p></li>
+<li><p><strong>集成上</strong>：在 <code class="docutils literal notranslate"><span class="pre">xio_sim</span></code> 这层，XIO <strong>会读取/使用 DIS 接口（WsfDisInterface）提供的信息</strong>，并把这些信息包装成 XIO 的请求/响应或订阅推送给外部应用；同时也可能通过扩展点影响 DIS 平台创建/消息路由。</p></li>
+</ul>
+<p>如果你想我把“交叉调用链”画出来（例如 <code class="docutils literal notranslate"><span class="pre">WsfXIO_RequestDisDataPkt</span> <span class="pre">→</span> <span class="pre">WsfXIO_DisService::HandleRequest</span> <span class="pre">→</span> <span class="pre">WsfDisInterface/...</span> <span class="pre">→</span> <span class="pre">WsfXIO_DisPlatformInfoPkt</span></code>），我可以继续把对应 <code class="docutils literal notranslate"><span class="pre">.cpp</span></code> 的关键实现段落也定位出来。</p>
+</section>
+</section>
+<section id="id6">
+<h3>数据流转<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p><img alt="alt text" src="_images/image-16.png" />
+不难看出，XIO_Interface的AdvanceTime是在仿真线程中做的</p>
+<section id="pkt">
+<h4>单向 (Pkt)<a class="headerlink" href="#pkt" title="Link to this heading"></a></h4>
+<p>是双向的基础</p>
+</section>
+<section id="requestquery">
+<h4>双向（Request和Query）<a class="headerlink" href="#requestquery" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Query ：一次性“询问”，等一个“结论”（resolved / timeout / disconnected）。</p></li>
+<li><p>Request ：订阅式“请求”，会持续收数据，直到一方取消。</p></li>
+</ul>
+<section id="id7">
+<h5>从代码看区别<a class="headerlink" href="#id7" title="Link to this heading"></a></h5>
+<ul class="simple">
+<li><p>生命周期</p>
+<ul>
+<li><p>Query 构造时就注册到 QueryManager ，完成后 Complete() 立即移除（ WsfXIO_Query.cpp , WsfXIO_Query.cpp ）。</p></li>
+<li><p>Request 由 RequestManager 持有， AddRequest() 后会 Initialized() 并发送请求，之后可多次接收 Response （ WsfXIO_Request.cpp , WsfXIO_Request.hpp ）。</p></li>
+</ul>
+</li>
+<li><p>消息模式</p>
+<ul>
+<li><p>Query 的注释写得很明确：实际请求参数消息要“另外发送”， Query 本体主要跟踪“结果”（ WsfXIO_Query.hpp ）。</p></li>
+<li><p>Request 自己有 SendRequest(WsfXIO_RequestDataPkt&amp;) ，并通过 HandleResponse(...) 接收服务端连续回应（ WsfXIO_Request.hpp , WsfXIO_Request.cpp ）。</p></li>
+</ul>
+</li>
+<li><p>结束条件</p>
+<ul>
+<li><p>Query ： resolution / timeout / disconnect 三类结束（ WsfXIO_Query.cpp ）。</p></li>
+<li><p>Request ：通过取消包或连接断开结束； RequestManager 会处理远端取消和本地取消（ WsfXIO_Request.cpp , WsfXIO_Request.cpp ）。</p></li>
+</ul>
+</li>
+<li><p>连接要求</p>
+<ul>
+<li><p>Query 强制可靠连接（断言 IsReliable() ）（ WsfXIO_Query.cpp ）。</p></li>
+<li><p>Request 可以设置是否可靠（构造参数 aIsReliable ）（ WsfXIO_Request.hpp ）。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="id8">
+<h3>序列化和反序列化<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>“谁来调用 <code class="docutils literal notranslate"><span class="pre">Serialize</span></code>”：不是你手动调，而是 <strong>PacketIO（PakTCP_IO / PakUDP_IO）在发送/接收时自动调</strong>。</p>
+<p>“基础类型 vs 自定义类型怎么序列化”**：由 <code class="docutils literal notranslate"><span class="pre">operator&amp;</span></code> 做分发，基础类型走 <code class="docutils literal notranslate"><span class="pre">PakO/PakI::Serialize</span></code> → <code class="docutils literal notranslate"><span class="pre">GenBuffer::Put/Get</span></code>；自定义类型走 <code class="docutils literal notranslate"><span class="pre">Serialize/Save/Load</span></code> 规则（成员函数或非成员函数）。</p>
+<hr class="docutils" />
+<section id="serialize">
+<h4>1) Serialize 到底是谁调用的？（发送与接收调用链）<a class="headerlink" href="#serialize" title="Link to this heading"></a></h4>
+<section id="xio">
+<h5>发送链路（以 XIO 为例）<a class="headerlink" href="#xio" title="Link to this heading"></a></h5>
+<ul class="simple">
+<li><p>你代码里一般是 <code class="docutils literal notranslate"><span class="pre">connection-&gt;Send(pkt)</span></code>，例如 <code class="docutils literal notranslate"><span class="pre">WsfXIO_Connection::Send</span></code>（[WsfXIO_Connection.cpp#L45-L48](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/core/wsf/source/xio/WsfXIO_Connection.cpp#L45-L48)）</p></li>
+<li><p>它会转到 <code class="docutils literal notranslate"><span class="pre">WsfXIO_Interface::Send</span></code>，再转给 <code class="docutils literal notranslate"><span class="pre">PakThreadedIO::Send</span></code>，最终调用具体 socket I/O 的 <code class="docutils literal notranslate"><span class="pre">Send</span></code>（[PakThreadedIO.cpp#L101-L106](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakThreadedIO.cpp#L101-L106)）</p></li>
+<li><p>如果是 TCP，真正序列化发生在 <code class="docutils literal notranslate"><span class="pre">PakTCP_IO::Send(const</span> <span class="pre">PakPacket&amp;)</span></code> 里：</p>
+<ul>
+<li><p>它先查 <code class="docutils literal notranslate"><span class="pre">PakProcessor</span></code> 里注册的 PacketInfo（<code class="docutils literal notranslate"><span class="pre">GetPacketInfo(aPkt.ID())</span></code>）</p></li>
+<li><p>然后调用 <code class="docutils literal notranslate"><span class="pre">info-&gt;mWriteFn(pkt,</span> <span class="pre">PakO)</span></code>（[PakTCP_IO.cpp#L73-L88](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakTCP_IO.cpp#L73-L88)）</p></li>
+</ul>
+</li>
+</ul>
+<p>而这个 <code class="docutils literal notranslate"><span class="pre">mWriteFn</span></code> 是怎么来的？是在注册 packet 时由 <code class="docutils literal notranslate"><span class="pre">PakProcessor</span></code> 生成的函数指针，指向“调用该 packet 的 <code class="docutils literal notranslate"><span class="pre">Serialize</span></code>”：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PakProcessorDetail::SerializeBind&lt;PKT_TYPE,</span> <span class="pre">PakO&gt;::Serialize</span></code> 里面就是 <code class="docutils literal notranslate"><span class="pre">((PKT_TYPE&amp;)aPkt).Serialize(aBuff)</span></code>（[PakProcessor.hpp#L40-L45](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakProcessor.hpp#L40-L45)）</p></li>
+<li><p>注册时把 <code class="docutils literal notranslate"><span class="pre">mWriteFn</span></code> 绑定到这个函数指针（[PakProcessor.hpp#L261-L268](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakProcessor.hpp#L261-L268)）</p></li>
+</ul>
+<p><strong>结论</strong>：<code class="docutils literal notranslate"><span class="pre">Serialize</span></code> 是在 “发送时 PakTCP_IO/PakUDP_IO 写包” 阶段由 <code class="docutils literal notranslate"><span class="pre">PakProcessor</span></code> 的 <code class="docutils literal notranslate"><span class="pre">mWriteFn</span></code> 自动调用的，不需要你手动调。</p>
+</section>
+<section id="id9">
+<h5>接收链路（同理）<a class="headerlink" href="#id9" title="Link to this heading"></a></h5>
+<p>TCP 接收时，<code class="docutils literal notranslate"><span class="pre">PakTCP_IO::Receive</span></code> 会找到该 packet 的 <code class="docutils literal notranslate"><span class="pre">mReadFn</span></code>，然后调用它读字段：</p>
+<ul class="simple">
+<li><p>[PakTCP_IO.cpp#L252-L254](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakTCP_IO.cpp#L252-L254)</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">mReadFn</span></code> 同样是 <code class="docutils literal notranslate"><span class="pre">SerializeBind&lt;PKT_TYPE,</span> <span class="pre">PakI&gt;::Serialize</span></code>，也就是调用 <code class="docutils literal notranslate"><span class="pre">pkt.Serialize(PakI)</span></code>。</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="id10">
+<h4>2) 基础类型怎么序列化？自定义类型怎么序列化？<a class="headerlink" href="#id10" title="Link to this heading"></a></h4>
+<section id="int-float-double-unsigned">
+<h5>2.1 基础类型（int/float/double/unsigned…）<a class="headerlink" href="#int-float-double-unsigned" title="Link to this heading"></a></h5>
+<p>你在 packet 里写的这一句：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">aBuff</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">mPlatformIndex</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">mPitchRate</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">mRollRate</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">mYawRate</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">mThrottle</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>这里的 <code class="docutils literal notranslate"><span class="pre">aBuff</span></code> 可能是：</p>
+<ul class="simple">
+<li><p>发送时：<code class="docutils literal notranslate"><span class="pre">PakO</span></code>（写入）</p></li>
+<li><p>接收时：<code class="docutils literal notranslate"><span class="pre">PakI</span></code>（读出）</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">&amp;</span></code> 运算符的实现来自 [PakSerializeImpl.hpp](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerializeImpl.hpp)：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator&amp;(PakO&amp;,</span> <span class="pre">T&amp;)</span></code> / <code class="docutils literal notranslate"><span class="pre">operator&amp;(PakI&amp;,</span> <span class="pre">T&amp;)</span></code> 会通过 traits 分发</p></li>
+<li><p>对<strong>基础类型</strong>会走：<code class="docutils literal notranslate"><span class="pre">aAr.Serialize(value)</span></code>（[PakSerializeImpl.hpp#L66-L71](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerializeImpl.hpp#L66-L71)）</p></li>
+</ul>
+<p>而 <code class="docutils literal notranslate"><span class="pre">PakO::Serialize</span></code> / <code class="docutils literal notranslate"><span class="pre">PakI::Serialize</span></code> 最终就是对 <code class="docutils literal notranslate"><span class="pre">GenBuffer</span></code> 的 <code class="docutils literal notranslate"><span class="pre">Put/Get</span></code>：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PakO::Serialize(const</span> <span class="pre">T&amp;)</span></code> → <code class="docutils literal notranslate"><span class="pre">mBufferPtr-&gt;Put(aVal)</span></code>（[PakO.hpp#L40-L44](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakO.hpp#L40-L44)）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PakI::Serialize(T&amp;)</span></code> → <code class="docutils literal notranslate"><span class="pre">mBufferPtr-&gt;Get(aVal)</span></code>（[PakI.hpp#L37-L41](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakI.hpp#L37-L41)）</p></li>
+</ul>
+<p>所以基础类型的本质就是：</p>
+<ul class="simple">
+<li><p><strong>写</strong>：按顺序把值写进 <code class="docutils literal notranslate"><span class="pre">GenBuffer</span></code></p></li>
+<li><p><strong>读</strong>：按相同顺序从 <code class="docutils literal notranslate"><span class="pre">GenBuffer</span></code> 读出来</p></li>
+</ul>
+</section>
+<section id="struct-class">
+<h5>2.2 自定义类型（struct/class）<a class="headerlink" href="#struct-class" title="Link to this heading"></a></h5>
+<p>Pak 的规则在 [PakSerialize.hpp](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerialize.hpp#L12-L29) 里写得很清楚：自定义类型要能被序列化，满足以下任意一种即可：</p>
+<ul class="simple">
+<li><p>类型里定义成员模板函数：<code class="docutils literal notranslate"><span class="pre">template&lt;typename</span> <span class="pre">AR&gt;</span> <span class="pre">void</span> <span class="pre">Serialize(AR&amp;</span> <span class="pre">ar)</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code></p></li>
+<li><p>或者提供非成员 <code class="docutils literal notranslate"><span class="pre">Serialize(ar,</span> <span class="pre">T&amp;)</span></code></p></li>
+<li><p>或者提供非成员 <code class="docutils literal notranslate"><span class="pre">Save/Load</span></code></p></li>
+<li><p>或者是 Pak 已经内置支持的类型（std::string、vector、map 等）</p></li>
+</ul>
+<p>当一个类型不是“基础类型”时，默认分发会走：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PakSerialization::Serialize(ar,</span> <span class="pre">value)</span></code>，默认实现是 <code class="docutils literal notranslate"><span class="pre">value.Serialize(ar)</span></code>（[PakSerializeImpl.hpp#L24-L28](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakSerializeImpl.hpp#L24-L28)）</p></li>
+</ul>
+<p>也就是说：<strong>自定义类型最终大概率是调用你定义的 <code class="docutils literal notranslate"><span class="pre">T::Serialize(ar)</span></code></strong>（除非你提供了更高优先级的非成员 Serialize/Save/Load）。</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="flightcontrolpkt">
+<h4>3) 回到你的 FlightControlPkt：它具体序列化了什么？<a class="headerlink" href="#flightcontrolpkt" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>你的 packet 通过 <code class="docutils literal notranslate"><span class="pre">XIO_DEFINE_PACKET</span></code> 生成 <code class="docutils literal notranslate"><span class="pre">Serialize(aBuff)</span></code>，它会先写 XIO 的包头（applicationId/flags/timestamp），再写你的字段（[WsfXIO_Packet.hpp#L92-L100](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/core/wsf/source/xio/WsfXIO_Packet.hpp#L92-L100)）</p></li>
+<li><p>包头序列化是 <code class="docutils literal notranslate"><span class="pre">WsfXIO_Packet::Serialize</span></code>：<code class="docutils literal notranslate"><span class="pre">aBuff</span> <span class="pre">&amp;</span> <span class="pre">mApplicationId</span> <span class="pre">&amp;</span> <span class="pre">mFlags</span> <span class="pre">&amp;</span> <span class="pre">mTimeStamp;</span></code>（[WsfXIO_Packet.hpp#L63-L69](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/core/wsf/source/xio/WsfXIO_Packet.hpp#L63-L69)）</p></li>
+<li><p>你的字段序列化就是 <code class="docutils literal notranslate"><span class="pre">unsigned/double</span></code> 这类基础类型，走 <code class="docutils literal notranslate"><span class="pre">PakO/PakI::Serialize</span></code> → <code class="docutils literal notranslate"><span class="pre">GenBuffer::Put/Get</span></code></p></li>
+</ul>
+<hr class="docutils" />
+<p>如果你想彻底“看到写入发生在哪一行”，最关键的两处就是：</p>
+<ul class="simple">
+<li><p>发送时真正触发 <code class="docutils literal notranslate"><span class="pre">pkt.Serialize(PakO)</span></code> 的地方：<code class="docutils literal notranslate"><span class="pre">(*info-&gt;mWriteFn)(pkt,</span> <span class="pre">*mSerializeWriter)</span></code>（[PakTCP_IO.cpp#L77-L81](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakTCP_IO.cpp#L77-L81)）</p></li>
+<li><p>基础类型真正写入 buffer 的地方：<code class="docutils literal notranslate"><span class="pre">PakO::Serialize</span> <span class="pre">→</span> <span class="pre">GenBuffer::Put</span></code>（[PakO.hpp#L40-L44](file:///d:/WorkSpace/afsim-2.9.0-win64/swdev/src/tools/packetio/source/PakO.hpp#L40-L44)）</p></li>
+</ul>
+<p>你如果愿意贴一下 “FlightControlPkt 是在哪里 <code class="docutils literal notranslate"><span class="pre">Send(pkt)</span></code> 的”，我也可以把它完整串成：<strong>发送端调用点 → PakTCP_IO/PakUDP_IO → Serialize → 对端 ReceiveNew → PakProcessor::ProcessPacket → 回调处理函数</strong> 的闭环调用链。</p>
+</section>
+<section id="sfinae">
+<h4>SFINAE<a class="headerlink" href="#sfinae" title="Link to this heading"></a></h4>
+<p>序列化用&amp;运算符，还可以用&gt;&gt;运算符</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">inline</span> <span class="n">PakI</span><span class="o">&amp;</span> <span class="n">operator</span><span class="o">&amp;</span><span class="p">(</span><span class="n">PakI</span><span class="o">&amp;</span> <span class="n">aAr</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">aValue</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">typename</span> <span class="n">PakSerialization</span><span class="p">::</span><span class="n">SerializeInterface</span><span class="o">&lt;</span><span class="n">PakI</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Dispatch</span> <span class="n">Dispatch</span><span class="p">;</span>
+   <span class="n">Dispatch</span><span class="p">::</span><span class="n">Go</span><span class="p">(</span><span class="n">aAr</span><span class="p">,</span> <span class="n">aValue</span><span class="p">);</span>
+   <span class="k">return</span> <span class="n">aAr</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>SerializeInterface顾名思义</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">AR</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeInterface</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">T</span>                                                                                       <span class="n">ValueType</span><span class="p">;</span>
+   <span class="n">typedef</span> <span class="n">SerializeTraits</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;</span>                                                              <span class="n">Traits</span><span class="p">;</span>
+   <span class="n">typedef</span> <span class="n">SerializeDispatch</span><span class="o">&lt;</span><span class="n">AR</span><span class="p">,</span> <span class="n">ValueType</span><span class="p">,</span> <span class="n">typename</span> <span class="n">Traits</span><span class="p">::</span><span class="n">serialize_trait_type</span><span class="p">,</span> <span class="n">AR</span><span class="p">::</span><span class="n">cIS_OUTPUT</span><span class="o">&gt;</span> <span class="n">Dispatch</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Trait的模板匹配</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeTraits</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">DefaultTypeTrait</span> <span class="n">serialize_trait_type</span><span class="p">;</span>
+   <span class="n">typedef</span> <span class="n">T</span>                <span class="n">value_type</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="c1">#define DEFINE_TRAIT(TYPE_NAME, TRAIT_NAME)    \</span>
+   <span class="n">template</span><span class="o">&lt;&gt;</span>                                  \
+   <span class="n">struct</span> <span class="n">SerializeTraits</span><span class="o">&lt;</span><span class="n">TYPE_NAME</span><span class="o">&gt;</span>           \
+   <span class="p">{</span>                                           \
+      <span class="n">typedef</span> <span class="n">TRAIT_NAME</span> <span class="n">serialize_trait_type</span><span class="p">;</span> \
+   <span class="p">};</span>
+
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">signed</span> <span class="n">short</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">unsigned</span> <span class="n">short</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">signed</span> <span class="n">char</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">unsigned</span> <span class="n">char</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">unsigned</span> <span class="nb">int</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">unsigned</span> <span class="n">long</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">double</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">unsigned</span> <span class="n">long</span> <span class="n">long</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">signed</span> <span class="n">short</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">unsigned</span> <span class="n">short</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">char</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">signed</span> <span class="n">char</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">unsigned</span> <span class="n">char</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="nb">int</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">long</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">unsigned</span> <span class="nb">int</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">unsigned</span> <span class="n">long</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">double</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="nb">float</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="n">DEFINE_TRAIT</span><span class="p">(</span><span class="n">const</span> <span class="n">unsigned</span> <span class="n">long</span> <span class="n">long</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">)</span>
+<span class="c1">#undef DEFINE_TRAIT</span>
+
+<span class="n">template</span><span class="o">&lt;</span><span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">non_const_type</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">T</span> <span class="nb">type</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="n">template</span><span class="o">&lt;</span><span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">non_const_type</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">T</span> <span class="nb">type</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>例如通过unsigned long long匹配到Trait是BasicType，然后将BasicType传入SerializeDispatcher，进而匹配对应的Serialize</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">AR</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">typename</span> <span class="n">TRAIT</span><span class="p">,</span> <span class="nb">bool</span> <span class="n">IS_OUTPUT</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeDispatch</span><span class="p">;</span>
+
+<span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">AR</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeDispatch</span><span class="o">&lt;</span><span class="n">AR</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">DefaultTypeTrait</span><span class="p">,</span> <span class="n">true</span><span class="o">&gt;</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">typename</span> <span class="n">Non_Const</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Type</span> <span class="n">ValueType</span><span class="p">;</span>
+   <span class="n">static</span> <span class="n">void</span>                         <span class="n">Go</span><span class="p">(</span><span class="n">AR</span><span class="o">&amp;</span> <span class="n">aAr</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">aValue</span><span class="p">)</span> <span class="p">{</span> <span class="n">Save</span><span class="p">(</span><span class="n">aAr</span><span class="p">,</span> <span class="n">const_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">aValue</span><span class="p">));</span> <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">AR</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeDispatch</span><span class="o">&lt;</span><span class="n">AR</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">DefaultTypeTrait</span><span class="p">,</span> <span class="n">false</span><span class="o">&gt;</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">typename</span> <span class="n">Non_Const</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Type</span> <span class="n">ValueType</span><span class="p">;</span>
+   <span class="n">static</span> <span class="n">void</span>                         <span class="n">Go</span><span class="p">(</span><span class="n">AR</span><span class="o">&amp;</span> <span class="n">aAr</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">aValue</span><span class="p">)</span> <span class="p">{</span> <span class="n">Load</span><span class="p">(</span><span class="n">aAr</span><span class="p">,</span> <span class="n">const_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">aValue</span><span class="p">));</span> <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">AR</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="p">,</span> <span class="nb">bool</span> <span class="n">IS_OUTPUT</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeDispatch</span><span class="o">&lt;</span><span class="n">AR</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">BasicTypeTrait</span><span class="p">,</span> <span class="n">IS_OUTPUT</span><span class="o">&gt;</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">typename</span> <span class="n">Non_Const</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Type</span> <span class="n">ValueType</span><span class="p">;</span>
+   <span class="n">static</span> <span class="n">void</span>                         <span class="n">Go</span><span class="p">(</span><span class="n">AR</span><span class="o">&amp;</span> <span class="n">aAr</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">aValue</span><span class="p">)</span> <span class="p">{</span> <span class="n">aAr</span><span class="o">.</span><span class="n">Serialize</span><span class="p">(</span><span class="n">const_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">aValue</span><span class="p">));</span> <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">AR</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">struct</span> <span class="n">SerializeInterface</span>
+<span class="p">{</span>
+   <span class="n">typedef</span> <span class="n">T</span>                                                                                       <span class="n">ValueType</span><span class="p">;</span>
+   <span class="n">typedef</span> <span class="n">SerializeTraits</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;</span>                                                              <span class="n">Traits</span><span class="p">;</span>
+   <span class="n">typedef</span> <span class="n">SerializeDispatch</span><span class="o">&lt;</span><span class="n">AR</span><span class="p">,</span> <span class="n">ValueType</span><span class="p">,</span> <span class="n">typename</span> <span class="n">Traits</span><span class="p">::</span><span class="n">serialize_trait_type</span><span class="p">,</span> <span class="n">AR</span><span class="p">::</span><span class="n">cIS_OUTPUT</span><span class="o">&gt;</span> <span class="n">Dispatch</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>总的来说，对于BasicValueType，直接reinterpret内存，对于DefaultType，调用特例化的模板方法（特例化的方法中，可能会继续触发operator &amp;）。</p>
+</section>
+</section>
+<section id="socket">
+<h3>Socket<a class="headerlink" href="#socket" title="Link to this heading"></a></h3>
+<p>代码很简单，首选一个TcpConnector监听系统分配的端口。然后脚本中IP和端口，ConnectToTarget方法会连接UDP。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>bool WsfXIO_Interface::Initialize()
+{
+   mInterfaceRequested |= (!mUDP_Targets.empty()); // The interface is instantiated if connections are requested
+   mShowConnections |= mDebugEnabled;
+
+   if (mInterfaceRequested)
+   {
+      mConnectorPtr = new PakTCP_Connector(this);
+      if (!mConnectorPtr-&gt;Listen(0))
+      {
+         ut::log::info() &lt;&lt; &quot;xio_interface: Could not bind to a port.&quot;;
+      }
+      else
+      {
+         mTCP_Port = mConnectorPtr-&gt;GetBoundPort();
+         if (mShowConnections)
+         {
+            auto out = ut::log::info() &lt;&lt; &quot;xio_interface: Accepting connections.&quot;;
+            out.AddNote() &lt;&lt; &quot;Port: &quot; &lt;&lt; mTCP_Port;
+         }
+      }
+   }
+
+   for (UDP_Target&amp; target : mUDP_Targets)
+   {
+      ConnectToTarget(target);
+   }
+   // mUDP_Targets.clear(); //Why do we clear this here?
+
+   if (mInterfaceRequested)
+   {
+      mThreadedIO.Start();
+      mIsInitialized = true;
+   }
+
+   return true;
+}
+</pre></div>
+</div>
+<section id="id11">
+<h4>三个模糊概念<a class="headerlink" href="#id11" title="Link to this heading"></a></h4>
+</section>
+</section>
+</section>
+<section id="paktcp-server-mconnectionlist">
+<h2>1) PakTCP_Server::mConnectionList 是什么<a class="headerlink" href="#paktcp-server-mconnectionlist" title="Link to this heading"></a></h2>
+<p>在 PakTCP_Server.hpp 里：</p>
+<ul class="simple">
+<li><p>PakTCP_Server 是一个 通用的 TCP server 封装 （监听端口、accept 客户端）。</p></li>
+<li><p>mConnectionList （ std::vector&lt;GenTCP_IO*&gt; ）是它内部维护的 已接受（accept）出来的 TCP 连接列表 ，元素类型是 GenTCP_IO* （更底层的 TCP IO 连接对象）。</p></li>
+<li><p>这个类更偏“底层通用网络服务”，不包含 XIO 的握手、connectionId、applicationName 等语义。</p></li>
+</ul>
+</section>
+<section id="paktcp-connector">
+<h2>2) PakTCP_Connector 是什么<a class="headerlink" href="#paktcp-connector" title="Link to this heading"></a></h2>
+<p>在 PakTCP_Connector.hpp 里：</p>
+<ul class="simple">
+<li><p>PakTCP_Connector 是 “连接建立器/接入器” ，同时做两件事：</p>
+<ol class="arabic simple">
+<li><p>Listen/Accept ：监听端口并接受新连接（server 侧）。 Accept() 返回的是 PakTCP_IO* （已经带 packet/header/serialize 的 TCP IO）。见 PakTCP_Connector.cpp</p></li>
+<li><p>异步 connect ： BeginConnect() 发起非阻塞连接； CompleteConnect() 轮询完成连接并返回 PakTCP_IO* 。见 PakTCP_Connector.cpp</p></li>
+</ol>
+</li>
+<li><p>它内部用的是 GenTCP_Server ，但对外提供的是更上层的 PakTCP_IO ，方便直接发/收 PakPacket。 简单理解： PakTCP_Server 更像“纯 socket server”； PakTCP_Connector 更像“给 PacketIO 用的 server+client connect 管理器”。</p></li>
+</ul>
+</section>
+<section id="wsfxio-interface-mconnections-wsfxio-connection">
+<h2>3) WsfXIO_Interface::mConnections / WsfXIO_Connection 是什么（重点）<a class="headerlink" href="#wsfxio-interface-mconnections-wsfxio-connection" title="Link to this heading"></a></h2>
+<p>在 WsfXIO_Interface.hpp 里：</p>
+<ul class="simple">
+<li><p>mConnections 是 XIO 层维护的 “当前所有 XIO 连接对象列表” （类型 ConnectionList ，元素是 WsfXIO_Connection* ）。</p></li>
+<li><p>WsfXIO_Connection 是 XIO 对“连接”的统一抽象，它把底层 IO（TCP 或 UDP）包装起来，并附加 XIO 的语义信息：</p>
+<ul>
+<li><p>PakSocketIO* mIOPtr ：真正负责发/收 packet 的对象（可能是 PakTCP_IO 或 PakUDP_IO ）</p></li>
+<li><p>mConnectionId ：本地唯一连接 id</p></li>
+<li><p>mApplicationName / mApplicationId / mApplicationType ：对端应用信息</p></li>
+<li><p>IsReliable() ：用 mTCP_IO_Ptr != nullptr 判断是否可靠（TCP）
+见 WsfXIO_Connection.hpp 。</p></li>
+</ul>
+</li>
+<li><p>另外 WsfXIO_Connection 继承了 PakConnection ，这个基类几乎是空的，只是为了在 packet 里能标识“sender 是哪个 connection”（XIO 收包时会 pkt-&gt;SetSender(mConnectionPtr) ，你之前看过 PakThreadedIO 那段）。</p></li>
+</ul>
+</section>
+<section id="id12">
+<h2>它们三者怎么串起来（XIO 的实际流程）<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>以 XIO 接受 TCP 连接为例：</p>
+<ol class="arabic simple">
+<li><p>WsfXIO_Interface 创建 PakTCP_Connector 并 Listen(0) 监听端口。见 WsfXIO_Interface.cpp</p></li>
+<li><p>WsfXIO_Interface::AcceptConnections() 里 mConnectorPtr-&gt;Accept(0) 拿到 PakTCP_IO* ioPtr 。见 WsfXIO_Interface.cpp</p></li>
+<li><p>用这个 ioPtr new 一个 WsfXIO_Connection(this, ioPtr) ，并放进 mConnections （这是 XIO 的“连接对象”）。见同段代码 WsfXIO_Interface.cpp</p></li>
+<li><p>把 ioPtr 交给 PakThreadedIO.AddIO() ，后续收包由 reactor 线程驱动；但包最终会带着 sender= WsfXIO_Connection* 回到 XIO 层处理。
+所以你可以把它们理解成：</p></li>
+</ol>
+<ul class="simple">
+<li><p>PakTCP_Server ：底层 TCP 连接列表（GenTCP_IO*）</p></li>
+<li><p>PakTCP_Connector ：把“建立 TCP 连接”这件事封装好，并产出 PakTCP_IO* （能发/收 packet）</p></li>
+<li><p>WsfXIO_Connection ：XIO 自己的“连接对象”，里面持有一个 PakSocketIO （TCP/UDP），并加上 XIO 的应用层语义； WsfXIO_Interface::mConnections 就是这些对象的容器</p></li>
+</ul>
+</section>
+<section id="id13">
+<h2>类功能介绍<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<section id="class-packetio-export-paktcp-io-public-paksocketio">
+<h3>class PACKETIO_EXPORT PakTCP_IO : public PakSocketIO<a class="headerlink" href="#class-packetio-export-paktcp-io-public-paksocketio" title="Link to this heading"></a></h3>
+<p>对IO的封装，含有GenTCP_Connection对象
+不直接发，会放到Buffer中，统一Flush</p>
+</section>
+<section id="class-genio-export-gentcp-connection-public-gensocketconnection">
+<h3>class GENIO_EXPORT GenTCP_Connection : public GenSocketConnection<a class="headerlink" href="#class-genio-export-gentcp-connection-public-gensocketconnection" title="Link to this heading"></a></h3>
+<p>处理通信逻辑</p>
+</section>
+<section id="class-genio-export-genudp-connection-public-gensocketconnection">
+<h3>class GENIO_EXPORT GenUDP_Connection : public GenSocketConnection<a class="headerlink" href="#class-genio-export-genudp-connection-public-gensocketconnection" title="Link to this heading"></a></h3>
+<p>处理UDP通信逻辑
+维护两个Socket</p>
+<ul class="simple">
+<li><p>默认情况其实只有一个 socket ：构造函数里一开始就是
+mReadSocket = mSendSocket = mSocket.get();
+见 GenUDP_Connection.cpp:L26-L36</p></li>
+<li><p>只有在 “send port == recv port” 时，才会额外创建一个接收 socket ：
+在 Init(sendAddr, interface, sendPort, recvPort) 里，如果 aSendToPort == aRecvPort，广播情况下，可能自己收到自己的报文</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="%E5%85%AB%E8%82%A1.html" class="btn btn-neutral float-left" title="计算机网络" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, yk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
